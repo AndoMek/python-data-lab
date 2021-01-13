@@ -15,6 +15,7 @@ def tac(filepath: str):
     for i in reversed(lines):
         print(i)
 
+
 if __name__ == "__main__":
     import os
 

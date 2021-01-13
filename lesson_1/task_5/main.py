@@ -11,8 +11,9 @@ def wc(filepath: str):
     try:
         length = len(open(filepath).readlines())
         return length
-    except:
-        return None
+    except (FileNotFoundError, IsADirectoryError):
+        return f'wc: cannot open {filepath} for reading: No such file or directory'
+
 
 if __name__ == "__main__":
     import os
