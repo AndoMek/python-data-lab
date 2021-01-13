@@ -19,7 +19,7 @@ def head(filepath: str, n: int):
                 try:
                     line = next(f).strip()
                     print(line)
-                except StopIteration:
+                except:
                     break
 
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # head -n 100500 loreipsum.txt
     head(loreipsum_path, 100500)
 
-    # # Should print nothing (file is empty). Equal to GNU `head` command
-    # head -n 10 blank.txt
+    # Should print whole file line by line. Equal to GNU `head` command
+    # head -n 100500 blank.txt
     head(blank_path, 10)
     # but blank.txt is blank ¯\_(ツ)_/¯

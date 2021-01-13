@@ -13,8 +13,7 @@ def tail(filepath: str, n: int):
     """
     try:
         length = len(open(filepath).readlines())
-    except (FileNotFoundError, IsADirectoryError):
-        print(f'tail: cannot open {filepath} for reading: No such file or directory')
+    except:
         return None
     if n > 0 or os.stat(filepath).st_size != 0:
         with open(filepath, 'r') as f:
