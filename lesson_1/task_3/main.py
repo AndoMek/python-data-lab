@@ -16,6 +16,7 @@ def tac(filepath: str):
     for i in reversed(lines):
         print(i)
 
+
 if __name__ == "__main__":
     import os
     ROOT = os.path.dirname(__file__)
