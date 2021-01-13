@@ -1,3 +1,6 @@
+import os
+
+
 def head(filepath: str, n: int):
     """ Read file ``filepath`` in text mode and print beginning ``n`` lines of file
 
@@ -10,10 +13,17 @@ def head(filepath: str, n: int):
     :param filepath: path to text file
     :param n: number of line to output. Integer great or equal zero
     """
+    if n > 0 or os.stat(filepath).st_size != 0:
+        with open(filepath, 'r') as f:
+            for i in range(n):
+                try:
+                    line = next(f).strip()
+                    print(line)
+                except:
+                    break
 
 
 if __name__ == "__main__":
-    import os
     ROOT = os.path.dirname(__file__)
 
     loreipsum_path = os.path.join(ROOT, "loreipsum.txt")
@@ -34,3 +44,4 @@ if __name__ == "__main__":
     # Should print whole file line by line. Equal to GNU `head` command
     # head -n 100500 blank.txt
     head(blank_path, 10)
+    # but blank.txt is blank ¯\_(ツ)_/¯

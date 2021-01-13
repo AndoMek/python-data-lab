@@ -8,7 +8,11 @@ def wc(filepath: str):
     :param filepath: path to text file
     :return Number of lines in file
     """
-
+    try:
+        length = len(open(filepath).readlines())
+        return length
+    except:
+        return None
 
 if __name__ == "__main__":
     import os

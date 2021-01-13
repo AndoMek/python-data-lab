@@ -9,9 +9,16 @@ def nl(filepath: str, v: int = 1, s: str = "\t\t"):
     :param v: first line number
     :param s: separator between number and line
     """
+    lines = []
+    if os.stat(filepath).st_size != 0:
+        with open(filepath, 'r') as f:
+            lines = [line.strip() for line in f]
+    for i,line in enumerate(lines):
+        print(str(i+v)+s+line)
 
 
 if __name__ == "__main__":
+
     import os
     ROOT = os.path.dirname(__file__)
 
@@ -27,7 +34,7 @@ if __name__ == "__main__":
     nl(loreipsum_path, s=": ")
 
     # Should print whole file with numbers of lines and numeration start from 42. Equal to GNU `nl` command
-    # nl loreipsum.txt -v 42 -w 1
+    # s.stat(filepath).st_size
     nl(loreipsum_path, v=42)
 
     # Should print nothing (file is empty). Equal to GNU `nl` command
