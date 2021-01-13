@@ -19,7 +19,7 @@ def head(filepath: str, n: int):
                 try:
                     line = next(f).strip()
                     print(line)
-                except:
+                except StopIteration:
                     break
 
 

@@ -13,7 +13,7 @@ def nl(filepath: str, v: int = 1, s: str = "\t\t"):
     if os.stat(filepath).st_size != 0:
         with open(filepath, 'r') as f:
             lines = [line.strip() for line in f]
-    for i,line in enumerate(lines):
+    for i, line in enumerate(lines):
         print(str(i+v)+s+line)
 
 
