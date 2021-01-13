@@ -11,10 +11,21 @@ def tail(filepath: str, n: int):
     :param filepath: path to text file
     :param n: number of line to output. Integer great or equal zero
     """
+    try:
+        length = len(open(filepath).readlines())
+    except:
+        return None
+    if n > 0 or os.stat(filepath).st_size != 0:
+        with open(filepath, 'r') as f:
+            for i in range(length):
+                line = next(f).strip()
+                if i >= length - n:
+                    print(line)
 
 
 if __name__ == "__main__":
     import os
+
     ROOT = os.path.dirname(__file__)
 
     loreipsum_path = os.path.join(ROOT, "loreipsum.txt")

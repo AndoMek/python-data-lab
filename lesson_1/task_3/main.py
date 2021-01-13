@@ -8,7 +8,12 @@ def tac(filepath: str):
 
     :param filepath: path to text file
     """
-
+    lines = []
+    if os.stat(filepath).st_size != 0:
+        with open(filepath, 'r') as f:
+            lines = [line.strip() for line in f]
+    for i in reversed(lines):
+        print(i)
 
 if __name__ == "__main__":
     import os
