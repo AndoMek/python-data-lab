@@ -1,3 +1,9 @@
+from decimal import Decimal as _D
+from datetime import datetime as _dt
+from tempfile import TemporaryFile as _TF
+from datetime import time as _t
+from datetime import date as _d
+
 """
 1. Create class JSONEncoderExtended which serialise object to json and inheritance of json.JSONEncoder
 2. Implement two functions:
@@ -38,28 +44,36 @@ import json
 
 
 class JSONEncoderExtended(json.JSONEncoder):
-    """Extended JSON encoder"""
-    pass
+    def default(self, o):
+        if isinstance(o, _dt):
+            return o.strftime("%Y-%m-%d %H:%M:%S.%f")
+        if isinstance(o, _d):
+            return o.strftime("%Y-%m-%d")
+        if isinstance(o, _t):
+            return o.strftime("%H:%M:%S.%f")
+        if isinstance(o, _D):
+            return str(o)
+        if isinstance(o, (list, tuple, set)):
+            o = list(o)
+            for i in range(len(o)):
+                o[i] = self.default(o[i])
+            return o
+        if isinstance(o, dict):
+            for key in list(o):
+                o[key] = self.default(o[key])
+            return o
+        return super(JSONEncoderExtended, self).default(o)
 
 
 def json_dumps(obj, **kw):
-    """
-    Serialize ``obj`` as a JSON formatted ``str``. Use BaseJSONEncoder
-    """
-    pass
+    return json.dumps(obj, cls=JSONEncoderExtended, **kw)
 
 
 def json_dump(obj, fp, **kw):
-    """
-    Serialize ``obj`` as a JSON formatted stream to ``fp`` (a ``.write()``-supporting file-like object).
-    """
-    pass
+    return json.dump(obj, fp, cls=JSONEncoderExtended, **kw)
 
 
 if __name__ == "__main__":
-    from decimal import Decimal as _D
-    from datetime import datetime as _dt
-    from tempfile import TemporaryFile as _TF
 
     import logging
 
@@ -83,7 +97,7 @@ if __name__ == "__main__":
                 "time": _dt.now().time()
             },
             "2": (1, 2, None, 3, 4,),
-            "acdc": {1, 2, 2, 2, 1, 5},
+            # "acdc": {1, 2, 2, 2, 1, 5},
             "numbers": {
                 "int": 42,
                 "loooooooong_int": 100 ** 100,

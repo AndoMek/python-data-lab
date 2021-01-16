@@ -1,5 +1,8 @@
 import csv
-csv.field_size_limit(2**31 - 1)  # Workaround to avoid _csv.Error: field larger than field limit (131072)
+from collections import deque
+from itertools import islice
+
+csv.field_size_limit(2 ** 31 - 1)  # Workaround to avoid _csv.Error: field larger than field limit (131072)
 
 
 def csv2dict(fp, start_position=0, header=True, fieldnames=None, delimiter=",", quotechar='"', footer=0):
@@ -37,17 +40,43 @@ def csv2dict(fp, start_position=0, header=True, fieldnames=None, delimiter=",", 
     Additional:
         CSV library: https://docs.python.org/3/library/csv.html
     """
-
-    yield
+    lines = csv.reader(fp, delimiter=delimiter, quotechar=quotechar)
+    try:
+        for _ in range(start_position):
+            next(lines)
+    except StopIteration:
+        return
+    dictionary = {}
+    if header is True:
+        header = next(lines)
+        for name in header:
+            dictionary[name] = None
+    elif fieldnames is not None:
+        for name in fieldnames:
+            dictionary[name] = None
+    else:
+        row = next(lines)
+        for i, field in enumerate(row):
+            dictionary["col" + str(i)] = field
+    if footer == 0:
+        waste = deque(islice(lines, 1), 1)
+    else:
+        waste = deque(islice(lines, footer), footer)
+    for i in lines:
+        buff = waste.popleft()
+        for field, key in zip(buff, dictionary.keys()):
+            dictionary[key] = field
+        yield dictionary
+        waste.append(i)
 
 
 if __name__ == "__main__":
-    f = "path-to-file.csv"
+    f = "events.csv"
 
-    with open(f, "rb") as fp:
+    with open(f, "r") as fp:
         gen = csv2dict(
             fp, start_position=0,
-            header=True, fieldnames=None,
+            header=False, fieldnames=None,
             delimiter=",", quotechar='"', footer=0
         )
         for row in gen:
