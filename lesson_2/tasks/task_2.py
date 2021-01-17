@@ -53,7 +53,9 @@ class JSONEncoderExtended(json.JSONEncoder):
             return o.strftime("%H:%M:%S.%f")
         if isinstance(o, _D):
             return str(o)
-        if isinstance(o, (list, tuple, set)):
+        if isinstance(o,  set):
+            return list(o)
+        if isinstance(o, (list, tuple)):
             o = list(o)
             for i in range(len(o)):
                 o[i] = self.default(o[i])
@@ -97,7 +99,7 @@ if __name__ == "__main__":
                 "time": _dt.now().time()
             },
             "2": (1, 2, None, 3, 4,),
-            # "acdc": {1, 2, 2, 2, 1, 5},
+            "acdc": {1, 2, 2, 2, 1, 5},
             "numbers": {
                 "int": 42,
                 "loooooooong_int": 100 ** 100,
