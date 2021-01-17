@@ -1,8 +1,6 @@
 import csv
-from collections import deque
-from itertools import islice
 
-csv.field_size_limit(2**31 - 1)  # Workaround to avoid _csv.Error: field larger than field limit (131072)
+csv.field_size_limit(2 ** 31 - 1)  # Workaround to avoid _csv.Error: field larger than field limit (131072)
 
 
 class Csv2Dict:
@@ -43,49 +41,65 @@ class Csv2Dict:
 
     def __init__(self, fp, start_position=0, header=True,
                  fieldnames=None, delimiter=",", quotechar='"', footer=0):
-        self.lines = csv.reader(fp, delimiter=delimiter, quotechar=quotechar)
-        try:
-            for _ in range(start_position):
-                next(self.lines)
-        except StopIteration:
-            return
-        self.dictionary = {}
+        lines_gen = skip_line(fp, start_position, footer)
+        self.lines = csv.reader(lines_gen, delimiter=delimiter, quotechar=quotechar)
+        self.first = False
         if header is True:
-            header = next(self.lines)
-            for name in header:
-                self.dictionary[name] = None
-        elif fieldnames is not None:
-            for name in fieldnames:
-                self.dictionary[name] = None
-        else:
-            row = next(self.lines)
-            for i, field in enumerate(row):
-                self.dictionary["col" + str(i)] = field
-        if footer == 0:
-            self.waste = deque(islice(self.lines, 1), 1)
-        else:
-            self.waste = deque(islice(self.lines, footer), footer)
+            try:
+                self.fieldnames = next(self.lines)
+            except StopIteration:
+                return
+        elif fieldnames is None:
+            try:
+                row = next(self.lines)
+            except StopIteration:
+                return
+            self.fieldnames = ["col%02d" % i for i in range(len(row))]
+            self.first_row = dict(zip(self.fieldnames, row))
+            self.first = True
 
     def __iter__(self):
         return self
 
     def __next__(self):
+        if self.first is True:
+            self.first = False
+            return self.first_row
         item = next(self.lines)
-        buff = self.waste.popleft()
-        for field, key in zip(buff, self.dictionary.keys()):
-            self.dictionary[key] = field
-        self.waste.append(item)
-        return self.dictionary
+        return dict(zip(self.fieldnames, item))
+
+
+def skip_line(file, start=0, footer=0):
+    try:
+        for _ in range(start):
+            next(file)
+    except StopIteration:
+        return
+    if footer == 0:
+        yield from file
+    else:
+        list_file = list(file)
+        len_file = len(list_file)
+        iter_file = iter(list_file)
+        if len_file > footer:
+            len_file -= footer
+            try:
+                for _ in range(len_file):
+                    yield next(iter_file)
+            except StopIteration:
+                return
+        else:
+            return
 
 
 if __name__ == "__main__":
-    f = "walmart_stock.csv"
+    f = "events.csv"
 
     with open(f, "r") as fp:
         it = Csv2Dict(
-            fp, start_position=0,
-            header=True, fieldnames=None,
-            delimiter=",", quotechar='"', footer=1200
+            fp, start_position=1,
+            header=False, fieldnames=None,
+            delimiter=",", quotechar='"', footer=0
         )
         for row in it:
             print(row)

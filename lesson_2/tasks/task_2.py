@@ -52,18 +52,9 @@ class JSONEncoderExtended(json.JSONEncoder):
         if isinstance(o, _t):
             return o.strftime("%H:%M:%S.%f")
         if isinstance(o, _D):
-            return str(o)
+            return float(o)
         if isinstance(o,  set):
             return list(o)
-        if isinstance(o, (list, tuple)):
-            o = list(o)
-            for i in range(len(o)):
-                o[i] = self.default(o[i])
-            return o
-        if isinstance(o, dict):
-            for key in list(o):
-                o[key] = self.default(o[key])
-            return o
         return super(JSONEncoderExtended, self).default(o)
 
 
