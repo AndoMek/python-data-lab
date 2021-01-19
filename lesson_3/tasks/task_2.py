@@ -1,5 +1,5 @@
 import inspect
-
+import functools
 """ Task 2: Create function decorator
 
 Requirement:
@@ -32,6 +32,7 @@ Requirement:
 
 
 def simple_logger(func):
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         """ Logging decorator
         Function print:
@@ -53,8 +54,8 @@ def simple_logger(func):
         print(f"Signature:\n {inspect.signature(func)}\n")
         result = func(*args, **kwargs)
         print("\nExecution time:\t%.3f\n\n" % (time.time() - start))
-        if result is not None:
-            print(f"\nResult:\t{result}\n")
+        print(f"\nResult:\t{result}\n")
+        return result
 
     return wrapper
 
@@ -62,24 +63,25 @@ def simple_logger(func):
 if __name__ == "__main__":
     import time
 
-
     @simple_logger
     def simple_function(a):
+        """Print some value"""
         print(a)
         print("I'm return nothing!")
 
 
     @simple_logger
     def not_simple_function(sleep_time=3, result=42):
+        """Sleep and return value"""
         print("I want to sleep")
         time.sleep(sleep_time)
         return result
 
-
+    print(simple_function.__doc__)
     print(help(simple_function))
     simple_function("So Simple")
 
-    print(help(simple_function))
+    print(help(not_simple_function))
     not_simple_function()
 
     not_simple_function(sleep_time=.1, result=100 ** 100)

@@ -65,11 +65,11 @@ class Count(Iterator):
             int: next value
 
         """
-        return self._start + self._step
+        return self.__next__()
 
     def __next__(self):
         self.buff = self._start
-        self._start = self.nextval
+        self._start += self._step
         return self.buff
 
 

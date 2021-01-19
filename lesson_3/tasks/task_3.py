@@ -1,5 +1,6 @@
 import re
 from decimal import Decimal as decimal
+import functools
 
 """ Task 3: Create functions which convert from ``str`` to another Python Type
 
@@ -27,6 +28,19 @@ Requirement:
 """
 
 
+def check_input_value(func):
+    @functools.wraps(func)
+    def wrapper(value: str):
+        if isinstance(value, str):
+            checked_value = func(value)
+            return checked_value
+        else:
+            raise TypeError
+
+    return wrapper
+
+
+@check_input_value
 def cast_to_bool(value: str):
     """ Convert string value to boolean
 
@@ -40,8 +54,6 @@ def cast_to_bool(value: str):
         TypeError: If 'value' is not str.
         ValueError: If `value` is not equal to `bool` after transformation.
     """
-    if not isinstance(value, str):
-        raise TypeError
     boolean = re.findall('[A-Za-z]{4,5}', value)
     if boolean:
         boolean = boolean[0].lower()
@@ -70,6 +82,7 @@ except TypeError as t_error:
     print("TypeError at cast_to_bool\n")
 
 
+@check_input_value
 def cast_to_int(value: str):
     """ Convert string value to integer
 
@@ -83,8 +96,6 @@ def cast_to_int(value: str):
         TypeError: If 'value' is not str.
         ValueError: If `value` is not equal to `int` after transformation.
     """
-    if not isinstance(value, str):
-        raise TypeError
     int_value = re.findall('[-]?[0-9]+', value)
     if int_value:
         int_value = int(int_value[0])
@@ -110,6 +121,7 @@ except TypeError as t_error:
     print("TypeError at cast_to_int\n")
 
 
+@check_input_value
 def cast_to_float(value: str):
     """ Convert string value to float
 
@@ -123,9 +135,7 @@ def cast_to_float(value: str):
         TypeError: If 'value' is not str.
         ValueError: If `value` is not equal to `float` after transformation.
     """
-    if not isinstance(value, str):
-        raise TypeError
-    float_value = re.findall('[-]?([0-9]*.[0-9]+|[0-9]+)', value)
+    float_value = re.findall('[+-]?[0-9]*.[0-9]+|[0-9]+', value)
     if float_value:
         float_value = float(float_value[0])
     else:
@@ -145,11 +155,12 @@ try:
 except ValueError as v_error:
     print(v_error)
     print("Value error at cast_to_float\n")
-except TypeError as terror:
+except TypeError as t_error:
     print(t_error)
     print("TypeError at cast_to_float\n")
 
 
+@check_input_value
 def cast_to_number(value: str):
     """ Convert string value to decimal.Decimal
 
@@ -163,9 +174,7 @@ def cast_to_number(value: str):
         TypeError: If 'value' is not str.
         ValueError: If `value` is not equal to `decimal.Decimal` after transformation.
     """
-    if not isinstance(value, str):
-        raise TypeError
-    dec_value = re.findall('[-]?([0-9]*.[0-9]+|[0-9]+)', value)
+    dec_value = re.findall('[-]?[0-9]*.[0-9]+|[0-9]+', value)
     if dec_value:
         dec_value = decimal(dec_value[0])
     else:
