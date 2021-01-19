@@ -1,3 +1,6 @@
+import re
+from decimal import Decimal as decimal
+
 """ Task 3: Create functions which convert from ``str`` to another Python Type
 
 Requirement:
@@ -24,71 +27,164 @@ Requirement:
 """
 
 
-def cast_to_bool(value):
+def cast_to_bool(value: str):
     """ Convert string value to boolean
 
-    Examples:
-        >>> cast_to_bool("true")
-        True
-        >>> cast_to_bool("TruE")
-        True
-        >>> cast_to_bool("fALse")
-        False
-        >>> cast_to_bool(" fALse\t")
-        False
-        >>> cast_to_bool("Yes")
-        Traceback (most recent call last):
-        ...
-        ValueError: Can't cast 'Yes' to Python bool
+    Args:
+        value: value to convert. String
+
+    Returns:
+        bool: True if successful, False otherwise.
+
+    Raises:
+        TypeError: If 'value' is not str.
+        ValueError: If `value` is not equal to `bool` after transformation.
     """
+    if not isinstance(value, str):
+        raise TypeError
+    boolean = re.findall('[A-Za-z]{4,5}', value)
+    if boolean:
+        boolean = boolean[0].lower()
+    else:
+        raise ValueError
+    if boolean == 'true':
+        return True
+    elif boolean == 'false':
+        return False
+    else:
+        raise ValueError
 
 
-def cast_to_int(value):
+print(cast_to_bool.__doc__)
+try:
+    print(cast_to_bool("true"))
+    print(cast_to_bool("TruE"))
+    print(cast_to_bool("fALse"))
+    print(cast_to_bool(" fALse\t"))
+    print(cast_to_bool("Yes"))
+except ValueError as v_error:
+    print(v_error)
+    print("Value error at cast_to_bool\n")
+except TypeError as t_error:
+    print(t_error)
+    print("TypeError at cast_to_bool\n")
+
+
+def cast_to_int(value: str):
     """ Convert string value to integer
 
-    Examples:
-        >>> cast_to_int("1")
-        1
-        >>> cast_to_int("1234567890987654321")
-        1234567890987654321
-        >>> cast_to_int(" -1\t")
-        -1
-        >>> cast_to_int("one")
-        Traceback (most recent call last):
-        ...
-        ValueError: Can't cast 'one' to Python int
+    Args:
+        value: value to convert. String
+
+    Returns:
+        int: value
+
+    Raises:
+        TypeError: If 'value' is not str.
+        ValueError: If `value` is not equal to `int` after transformation.
     """
+    if not isinstance(value, str):
+        raise TypeError
+    int_value = re.findall('[-]?[0-9]+', value)
+    if int_value:
+        int_value = int(int_value[0])
+    else:
+        raise ValueError
+    if isinstance(int_value, int):
+        return int_value
+    else:
+        raise ValueError
 
 
-def cast_to_float(value):
+print(cast_to_int.__doc__)
+try:
+    print(cast_to_int("1"))
+    print(cast_to_int("1234567890987654321"))
+    print(cast_to_int(" -1\t"))
+    print(cast_to_int("one"))
+except ValueError as v_error:
+    print(v_error)
+    print("Value error at cast_to_int\n")
+except TypeError as t_error:
+    print(t_error)
+    print("TypeError at cast_to_int\n")
+
+
+def cast_to_float(value: str):
     """ Convert string value to float
 
-    Examples:
-        >>> cast_to_float("1")
-        1.0
-        >>> cast_to_float("123456789.0987654321")
-        123456789.09876543
-        >>> cast_to_float(" -111.111\t")
-        -111.111
-        >>> cast_to_float("PI")
-        Traceback (most recent call last):
-        ...
-        ValueError: Can't cast 'PI' to Python float
+    Args:
+        value: value to convert. String
+
+    Returns:
+        float: value
+
+    Raises:
+        TypeError: If 'value' is not str.
+        ValueError: If `value` is not equal to `float` after transformation.
     """
+    if not isinstance(value, str):
+        raise TypeError
+    float_value = re.findall('[-]?([0-9]*.[0-9]+|[0-9]+)', value)
+    if float_value:
+        float_value = float(float_value[0])
+    else:
+        raise ValueError
+    if isinstance(float_value, float):
+        return float_value
+    else:
+        raise ValueError
 
 
-def cast_to_number(value):
+print(cast_to_float.__doc__)
+try:
+    print(cast_to_float("1"))
+    print(cast_to_float("123456789.0987654321"))  # output 123456789.09876543
+    print(cast_to_float(" -111.111\t"))
+    print(cast_to_float("PI"))
+except ValueError as v_error:
+    print(v_error)
+    print("Value error at cast_to_float\n")
+except TypeError as terror:
+    print(t_error)
+    print("TypeError at cast_to_float\n")
+
+
+def cast_to_number(value: str):
     """ Convert string value to decimal.Decimal
 
-    Examples:
-        >>> cast_to_number("1")
-        Decimal('1')
-        >>> cast_to_number("123456789.0987654321")
-        Decimal('123456789.0987654321')
-        >>> cast_to_number(" -111.111\t")
-        Decimal('-111.111')
-        >>> cast_to_number("PI")
-        Traceback (most recent call last):
-        ...
-        ValueError: Can't cast 'PI' to Python decimal.Decimal
+    Args:
+        value: value to convert. String
+
+    Returns:
+        decimal.Decimal: value
+
+    Raises:
+        TypeError: If 'value' is not str.
+        ValueError: If `value` is not equal to `decimal.Decimal` after transformation.
     """
+    if not isinstance(value, str):
+        raise TypeError
+    dec_value = re.findall('[-]?([0-9]*.[0-9]+|[0-9]+)', value)
+    if dec_value:
+        dec_value = decimal(dec_value[0])
+    else:
+        raise ValueError
+    if isinstance(dec_value, decimal):
+        return dec_value
+    else:
+        raise ValueError
+
+
+print(cast_to_number.__doc__)
+try:
+    print(cast_to_number("1"))
+    print(cast_to_number("123456789.0987654321"))
+    print(cast_to_number(" -111.111\t"))
+    print(cast_to_number("PI"))
+except ValueError as v_error:
+    print(v_error)
+    print("Value error at cast_to_number\n")
+except TypeError as t_error:
+    print(t_error)
+    print("TypeError at cast_to_number\n")

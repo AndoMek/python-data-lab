@@ -2,12 +2,11 @@ def tac(filepath: str):
     """ Read file ``filepath`` in text mode and reversing the records (lines by default) in each separately
 
     Requirements:
-        1. Open file ``filepath`` in text mode and read last ``n`` lines and output to console (print)
+        1. Open file ``filepath`` in text mode and read records in reversing order, records separated by newline
         2. If file ``filepath`` are empty than shouldn't output anything to console
         3. Lines content should output in direct order (not reversed)
 
     :param filepath: path to text file
-    :param n: number of line to output. Integer great or equal zero
     """
     lines = []
     if os.stat(filepath).st_size != 0:
@@ -19,6 +18,7 @@ def tac(filepath: str):
 
 if __name__ == "__main__":
     import os
+
     ROOT = os.path.dirname(__file__)
 
     loreipsum_path = os.path.join(ROOT, "loreipsum.txt")

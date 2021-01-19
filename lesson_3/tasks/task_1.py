@@ -19,15 +19,58 @@ Requirement:
     5. Use Type Hinting + Docstring
 """
 
-
-from collections import Iterator
+from collections.abc import Iterator
 
 
 class Count(Iterator):
     """ Extend itertools.count() object """
 
+    def __init__(self, name: str = None, start: int = 0, step: int = 1):
+        """ Initialize object of Count
+
+        Args:
+            name: Name of count object. Optional. Default to None. String
+            start: ``count`` value. Optional. Default to 0. Integer or float
+            step: Optional. Default to 1.
+        """
+        self._name = name
+        self._start = start
+        self._step = step
+
+    @property
+    def name(self) -> str:
+        """
+
+        Returns:
+            str: name of count object
+
+        """
+        return self._name
+
+    @property
+    def curval(self) -> int:
+        """
+
+        Returns:
+            int: current value
+
+        """
+        return self._start
+
+    @property
+    def nextval(self) -> int:
+        """
+
+        Returns:
+            int: next value
+
+        """
+        return self._start + self._step
+
     def __next__(self):
-        pass
+        self.buff = self._start
+        self._start = self.nextval
+        return self.buff
 
 
 if __name__ == "__main__":
