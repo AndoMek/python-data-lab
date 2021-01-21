@@ -44,6 +44,8 @@ def get_dict_value(dictionary: Dict, *keys: str, default: int = None, errors: st
     """
     try:
         if isinstance(dictionary[keys[0]], dict):
+            if len(keys) == 1:
+                return dictionary[keys[0]]
             return get_dict_value(dictionary[keys[0]], *keys[1:], default=default, errors=errors)
         else:
             if len(keys) == 1:
@@ -61,7 +63,7 @@ def get_dict_value(dictionary: Dict, *keys: str, default: int = None, errors: st
 
 
 if __name__ == "__main__":
-    d = {'a': {'b': {'c': 1, 'd': 2}, 'e': 3}, 'f': 4}
+    d = {'a': {'b': {'c': 1, 'd': {'h': 4}}, 'e': 3}, 'f': {'c': 1, 'd': 2}, 'g': {'l': {'h': 5}, 'k': 5}}
     print(get_dict_value(d, 'a', 'b', 'd'))
     print(get_dict_value(d, 'xxx'))
     print(get_dict_value(d, 'a', 'b', 'z'))
