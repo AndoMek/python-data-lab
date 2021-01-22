@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+
 """ Task 4: Create class ExtendedMapping which allow to call mapping key as attribute
 
 Requirement:
@@ -39,23 +40,14 @@ Requirement:
 
 class ExtendedMapping(Mapping):
     def __init__(self, m):
-        self.check_values(m)
-        self.m = m
         if not isinstance(m, Mapping):
             raise TypeError
+        self.check_values(m)
+        self.m = m
 
-    def check_values(self, d: dict):
-        is_int = False
+    def check_values(self, d: Mapping):
         for key, value in d.items():
-            if isinstance(key, str):
-                try:
-                    int(key[0])
-                    is_int = True
-                except ValueError:
-                    pass
-                if is_int:
-                    raise ValueError(f"'{key}' not valid Python identifier")
-            else:
+            if not isinstance(key, str) or not key.isidentifier():
                 raise ValueError(f"'{key}' not valid Python identifier")
             if isinstance(value, dict):
                 self.check_values(value)
@@ -67,22 +59,19 @@ class ExtendedMapping(Mapping):
         yield from self.m
 
     def __getitem__(self, key: str) -> int:
-        if isinstance(key, str):
-            try:
-                return self.m[key]
-            except KeyError:
-                raise KeyError(f"'ExtendedMapping' object has no key: '{key}'")
-        else:
-            raise ValueError
+        try:
+            return self.m[key]
+        except KeyError:
+            raise KeyError(f"'ExtendedMapping' object has no key: '{key}'")
 
-    def __getattr__(self, item: str) -> int:
-        if isinstance(item, str):
-            try:
-                return self.m[item]
-            except KeyError:
-                raise AttributeError(f"'ExtendedMapping' object has no attribute: '{item}'")
-        else:
-            raise ValueError
+    def __getattr__(self, item):
+        try:
+            return self.m[item]
+        except KeyError:
+            raise AttributeError(f"'ExtendedMapping' object has no attribute: '{item}'")
+
+    # def __getattribute__(self, name: str) -> int:
+    #     return self.m[name]
 
 
 if __name__ == '__main__':
@@ -91,9 +80,8 @@ if __name__ == '__main__':
     print(em1['a'])
     print(em1.a)
     # print(em1['a1'])
-    # print(em1.a1)
+    print(em1.a1)
     # d2 = {'2key': {'b': {'c': 1, 'd': 2}, 'e': 3}, 'a': 4}
     # em2 = ExtendedMapping(d2)
-    d2 = {'d': {'b': {'c': 1, 2: 2}, 'e': 3}, 'a': 4}
-    em2 = ExtendedMapping(d2)
-
+    # d2 = {'d': {'b': {'c': 1, 2: 2}, 'e': 3}, 'a': 4}
+    # em2 = ExtendedMapping(d2)
