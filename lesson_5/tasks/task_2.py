@@ -84,23 +84,36 @@ class DictReader:
     def __init__(self, fp: str, start_position: int = 0, header: bool = True,
                  fieldnames: tuple = None, delimiter: str = ",", quotechar: str = '"', footer: int = 0):
         self.url_path = fp
+        self.lines = iter([])
+        self.closed = False
+        self.fieldnames = []
+        self.first_row = dict()
+        self.first = False
+        self.session = requests.Session()
+        self.start_position = start_position
+        self.header = header
+        self.fieldnames = fieldnames
+        self.delimiter = delimiter
+        self.quotechar = quotechar
+        self.footer = footer
+        self.first_run = True
         try:
-            self.fp = requests.get(self.url_path, stream=True)
+            self.file = self.session.get(self.url_path, stream=True)
         except requests.exceptions.MissingSchema:
             raise NotFoundError(f"Can not find URL {self.url_path}")
-        self.closed = False
-        if self.fp.status_code != 200:
+        if self.file.status_code != 200:
             raise requests.HTTPError(f"Can not download csv file from {self.url_path}")
-        self.fp_iter = self.fp.iter_lines(decode_unicode=True)
-        lines_gen = skip_line(self.fp_iter, start_position, footer)
-        self.lines = csv.reader(lines_gen, delimiter=delimiter, quotechar=quotechar)
-        self.first = False
-        if header is True:
+        self.fp_iter = self.file.iter_lines(decode_unicode=True)
+
+    def preparatory_work(self):
+        self.lines = skip_line(self.fp_iter, self.start_position, self.footer)
+        self.lines = csv.reader(self.lines, delimiter=self.delimiter, quotechar=self.quotechar)
+        if self.header is True:
             try:
                 self.fieldnames = next(self.lines)
             except StopIteration:
                 return
-        elif fieldnames is None:
+        elif self.fieldnames is None:
             try:
                 row = next(self.lines)
             except StopIteration:
@@ -113,6 +126,9 @@ class DictReader:
         return self
 
     def __next__(self):
+        if self.first_run:
+            self.first_run = False
+            self.preparatory_work()
         if self.first is True:
             self.first = False
             return self.first_row
@@ -124,7 +140,7 @@ class DictReader:
         if self.closed:
             raise OSError(f"Connection {self.url_path!r} already closed")
         self.closed = True
-        self.fp.close()
+        self.session.close()
 
     def __enter__(self):
         if self.closed:
@@ -145,6 +161,7 @@ if __name__ == "__main__":
     )
     for row in it:
         print(row)
+    it.close()
     it.close()
     with DictReader(f, start_position=0,
                     header=False, fieldnames=None,

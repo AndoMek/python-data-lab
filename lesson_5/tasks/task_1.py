@@ -82,21 +82,33 @@ class DictReader:
             header: Header in file . Boolean. Default True.
             filednames: Header name. tuple of string. Default None.
             delimiter: separator for field. String. Default ','
-            quotechar: Separator for big filed with delimiter. Default '"'
+            quoter: Separator for big filed with delimiter. Default '"'
             footer: number of last lines to skip. Integer. Default 0
         """
         self.filepath = fp
-        self.fp = open(self.filepath, "r")
+        self.file = open(self.filepath, "r")
+        self.lines = iter([])
         self.closed = False
-        lines_gen = skip_line(self.fp, start_position, footer)
-        self.lines = csv.reader(lines_gen, delimiter=delimiter, quotechar=quotechar)
+        self.fieldnames = []
+        self.first_row = dict()
         self.first = False
-        if header is True:
+        self.start_position = start_position
+        self.header = header
+        self.fieldnames = fieldnames
+        self.delimiter = delimiter
+        self.quotechar = quotechar
+        self.footer = footer
+        self.first_run = True
+
+    def preparatory_work(self):
+        self.lines = skip_line(self.file, self.start_position, self.footer)
+        self.lines = csv.reader(self.lines, delimiter=self.delimiter, quotechar=self.quotechar)
+        if self.header is True:
             try:
                 self.fieldnames = next(self.lines)
             except StopIteration:
                 return
-        elif fieldnames is None:
+        elif self.fieldnames is None:
             try:
                 row = next(self.lines)
             except StopIteration:
@@ -109,6 +121,9 @@ class DictReader:
         return self
 
     def __next__(self):
+        if self.first_run:
+            self.first_run = False
+            self.preparatory_work()
         if self.first is True:
             self.first = False
             return self.first_row
@@ -120,7 +135,7 @@ class DictReader:
         if self.closed:
             raise OSError(f"File {self.filepath!r} already closed")
         self.closed = True
-        self.fp.close()
+        self.file.close()
 
     def __enter__(self):
         if self.closed:
