@@ -1,0 +1,12 @@
+version: '3'
+services:
+  httpbin:
+    build: .
+
+  proxy:
+    image: lucascimon/nginx-logging-proxy
+    environment:
+      PROXIED_ENDPOINT: http://httpbin:8000
+      LISTENING_PORT: 8000
+    ports:
+      - "8000:8000"
