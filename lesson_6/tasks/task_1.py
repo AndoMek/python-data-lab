@@ -1,3 +1,7 @@
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
 """ Task 1: Logging to stdout and stderr
 
 Requirements:
@@ -13,3 +17,48 @@ Requirements:
         b. Only stderr:
         python ./lesson_6/tasks/task_1.py 1>/dev/null
 """
+formatter = logging.Formatter(
+    fmt="%(asctime)s.%(msecs)06d|%(levelname)s|%(pathname)s:%(funcName)s:%(lineno)-2s|%(message)s",
+    datefmt="%Y-%m-%d,%H:%M:%S",
+)
+
+
+class LowerThanFilter(logging.Filter):
+    def __init__(self, level, lower):
+        self.level = level
+        self.lower = lower
+
+    def filter(self, record):
+        if self.lower:
+            return record.levelno < self.level
+        else:
+            return record.levelno > self.level
+
+
+def out():
+    ltw = LowerThanFilter(logging.WARNING, True)
+    stream_handler_out = logging.StreamHandler(sys.stdout)
+    stream_handler_out.addFilter(ltw)
+    stream_handler_out.setLevel(logging.DEBUG)
+    stream_handler_out.setFormatter(formatter)
+    return stream_handler_out
+
+
+def err():
+    gti = LowerThanFilter(logging.INFO, False)
+    stream_handler_out = logging.StreamHandler(stream=sys.stderr)
+    stream_handler_out.addFilter(gti)
+    stream_handler_out.setLevel(logging.WARNING)
+    stream_handler_out.setFormatter(formatter)
+    return stream_handler_out
+
+
+if __name__ == "__main__":
+    logger.addHandler(out())
+    logger.addHandler(err())
+    logger.setLevel(logging.DEBUG)
+    logger.debug('This is a debug message')
+    logger.info('This is an info message')
+    logger.warning('This is a warning message')
+    logger.error('This is an error message')
+    logger.critical('This is a critical message')
