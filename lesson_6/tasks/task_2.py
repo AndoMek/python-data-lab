@@ -48,7 +48,7 @@ class SimpleAuth(AuthBase):
         }
         body = r.body
         dictionary = body.decode("UTF-8")
-        dictionary = json.loads(json.loads(dictionary))
+        dictionary = json.loads(dictionary)
         dictionary = {**dictionary, **key}
         r.body = json.dumps(dictionary)
         return r
@@ -57,7 +57,7 @@ class SimpleAuth(AuthBase):
 if __name__ == "__main__":
     valve = {"International": "2021", "Winner": "Na'Vi"}
     with requests.Session() as session:
-        res = session.post('http://127.0.0.1:8000/post', auth=SimpleAuth('na', 'vi'), json=json.dumps(valve))
+        res = session.post('http://127.0.0.1:8000/post', auth=SimpleAuth('na', 'vi'), json=valve)
         print(res.json())
         print(res.raise_for_status())
         print(res.status_code)

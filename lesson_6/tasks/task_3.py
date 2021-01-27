@@ -60,7 +60,7 @@ class CallbackRetry(Retry):
                 self._callback(
                     RetryInfo(RetryStatus(self.total, self.connect, self.read, self.redirect), method, response))
             except Exception as exp:
-                logger.error(f'This is an error message, callback is failed {exp}')
+                logger.error(f'This is an error message, callback is failed {exp}',exc_info=True)
         return super(CallbackRetry, self).increment(method, url, response, *args, **kwargs)
 
 

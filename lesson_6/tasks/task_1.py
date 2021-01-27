@@ -24,30 +24,23 @@ formatter = logging.Formatter(
 
 
 class LowerThanFilter(logging.Filter):
-    def __init__(self, level, lower):
+    def __init__(self, level):
         self.level = level
-        self.lower = lower
 
     def filter(self, record):
-        if self.lower:
-            return record.levelno < self.level
-        else:
-            return record.levelno > self.level
+        return record.levelno < self.level
 
 
 def out():
-    ltw = LowerThanFilter(logging.WARNING, True)
+    ltw = LowerThanFilter(logging.WARNING)
     stream_handler_out = logging.StreamHandler(sys.stdout)
     stream_handler_out.addFilter(ltw)
-    stream_handler_out.setLevel(logging.DEBUG)
     stream_handler_out.setFormatter(formatter)
     return stream_handler_out
 
 
 def err():
-    gti = LowerThanFilter(logging.INFO, False)
     stream_handler_out = logging.StreamHandler(stream=sys.stderr)
-    stream_handler_out.addFilter(gti)
     stream_handler_out.setLevel(logging.WARNING)
     stream_handler_out.setFormatter(formatter)
     return stream_handler_out

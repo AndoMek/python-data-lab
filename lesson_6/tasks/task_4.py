@@ -81,10 +81,7 @@ def session_fun(retries: int = 5, session: requests.Session = None,
         method_whitelist=method_whitelist,
         callback=callback
     )
-    if session:
-        s = session
-    else:
-        s = requests.Session()
+    s = session or requests.Session()
     adapter = HTTPAdapter(max_retries=ret, pool_maxsize=pool_maxsize, pool_block=pool_block,
                           pool_connections=pool_connections)
     s.mount('http://', adapter)
