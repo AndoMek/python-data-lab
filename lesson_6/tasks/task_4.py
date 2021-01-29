@@ -1,4 +1,4 @@
-from task_3 import CallbackRetry, callback
+from lesson_6.tasks.task_3 import CallbackRetry, callback
 from requests.adapters import HTTPAdapter
 import requests
 from typing import Callable
@@ -92,5 +92,5 @@ def session_fun(retries: int = 5, session: requests.Session = None,
 
 if __name__ == "__main__":
     with requests.Session() as session:
-        session_fun(session=session, callback=callback)
+        session = session_fun(session=session, callback=callback)
         res = session.get("http://127.0.0.1:8000/status/429")

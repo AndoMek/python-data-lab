@@ -1,6 +1,6 @@
 import logging
 from urllib3.util.retry import Retry
-from task_1 import out, err
+from lesson_6.tasks.task_1 import out, err
 from collections import namedtuple
 from requests.adapters import HTTPAdapter
 import requests
