@@ -36,17 +36,11 @@ class NotFoundError(Exception):
     pass
 
 
-# Variable for save English name
-eng_name = ''
-
-
 def get_exchange_rate_by_day(urls):
     """Get exchange rate by day
 
     Args:
         urls: Url Queue
-        s: requests.Session
-
     Returns:
         dict
     """
@@ -56,9 +50,13 @@ def get_exchange_rate_by_day(urls):
             raise NotFoundError("Can not find Exchange Rate")
         data.raise_for_status()
         data = data.json()
-        return dict(zip(("Date", "Cur_ISO_Code", "Cur_ISO_Name", "Cur_Eng_Name", "Cur_Exchange_Rate", "Cur_Scale"),
-                     (data['Date'], data['Cur_ID'], data['Cur_Abbreviation'], eng_name, data['Cur_Scale'],
-                      data['Cur_OfficialRate'])))
+        return {
+            "Date": data['Date'],
+            "Cur_ISO_Code": data['Cur_ID'],
+            "Cur_ISO_Name": data['Cur_Abbreviation'],
+            "Cur_Scale": data['Cur_Scale'],
+            "Cur_Exchange_Rate": data['Cur_OfficialRate'],
+        }
 
 
 def get_eng_name(cur_id: str):
@@ -91,26 +89,31 @@ def get_exchange_rate(cur_id: str,
         generator / iterator exchange rate [day_from; date_to]
     """
     urls = []
+    eng_name = get_eng_name(cur_id)
     end, start = datetime.strptime(date_to, '%Y-%m-%d'), datetime.strptime(date_from, '%Y-%m-%d')
     for n in range(int((end - start).days) + 1):
         urls.append(
             f"https://www.nbrb.by/api/exrates/rates/{int(cur_id)}?ondate={(start + timedelta(n)).strftime('%Y-%m-%d')}")
     with mp.Pool(workers) as p:
-        yield from p.starmap(get_exchange_rate_by_day, zip(urls))
+        for item in p.starmap(get_exchange_rate_by_day, zip(urls)):
+            yield {
+                **item,
+                "Cur_Eng_Name": eng_name,
+            }
 
 
 if __name__ == "__main__":
 
     import warnings
+
     ar = []
-    for _ in range(100):
+    for _ in range(1):
         start = time.time()
         warnings.filterwarnings('ignore', message='Unverified HTTPS request')
-        eng_name = get_eng_name('298')
         cur = get_exchange_rate('298', '2020-10-11', '2020-11-25', 3)
         for dict_ in cur:
             print(dict_)
         ar.append(time.time() - start)
         time.sleep(0.5)
-        print(time.time() - start-0.5)
-    print(sum(ar)/len(ar))
+        print(time.time() - start - 0.5)
+    print(sum(ar) / len(ar))

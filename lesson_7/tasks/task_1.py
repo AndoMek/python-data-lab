@@ -1,7 +1,8 @@
 from datetime import timedelta, datetime, date as _d
 import threading
 import requests
-from queue import Queue
+from queue import Queue, Empty
+
 """ Task 1: Implement generator / iterator which return from NBRB API Currency exchange rate for selected currency
 Which uses threading.Threads
 
@@ -34,36 +35,34 @@ class NotFoundError(Exception):
     pass
 
 
-# Variable for save diction
-data_dict = []
-# Variable for save English name
-eng_name = ''
-# Queue length
-len_queue = 0
-
-
-def get_exchange_rate_by_day(urls, s):
+def get_exchange_rate_by_day(urls, eng_name, s):
     """Get exchange rate by day
 
     Args:
         urls: Url Queue
         s: requests.Session
+        eng_name: Currency English Name
+        len_queue: queue length
+        output: queue of dict
 
     Returns:
         dict
     """
-    global data_dict, len_queue
-    for _ in range(len_queue):
-        data = s.get(urls.get(), verify=False)
-        if not data.json():
-            raise NotFoundError("Can not find Exchange Rate")
-        data.raise_for_status()
-        data = data.json()
-        urls.task_done()
-        data_dict.append(
-            dict(zip(("Date", "Cur_ISO_Code", "Cur_ISO_Name", "Cur_Eng_Name", "Cur_Exchange_Rate", "Cur_Scale"),
-                     (data['Date'], data['Cur_ID'], data['Cur_Abbreviation'], eng_name, data['Cur_Scale'],
-                      data['Cur_OfficialRate']))))
+
+    data = s.get(urls, verify=False)
+    if not data.json():
+        raise NotFoundError("Can not find Exchange Rate")
+    data.raise_for_status()
+    data = data.json()
+    return (
+        {
+            "Date": data['Date'],
+            "Cur_ISO_Code": data['Cur_ID'],
+            "Cur_ISO_Name": data['Cur_Abbreviation'],
+            "Cur_Eng_Name": eng_name,
+            "Cur_Scale": data['Cur_Scale'],
+            "Cur_Exchange_Rate": data['Cur_OfficialRate'],
+        })
 
 
 def get_eng_name(cur_id: str):
@@ -81,6 +80,25 @@ def get_eng_name(cur_id: str):
     return name.json()['Cur_Name_Eng']
 
 
+def thread_function(args_queue, output_queue, input_event, output_event):
+    while True:
+        try:
+            args = args_queue.get(timeout=0.1)
+        except Empty:
+            if input_event.is_set():
+                break
+            continue
+        result = get_exchange_rate_by_day(*args)
+        output_queue.put(result)
+
+    output_event.set()
+
+
+def url_with_date(end, start_, cur_id):
+    for n in range(int((end - start_).days) + 1):
+        yield f"https://www.nbrb.by/api/exrates/rates/{int(cur_id)}?ondate={(start_ + timedelta(n)).strftime('%Y-%m-%d')}"
+
+
 def get_exchange_rate(cur_id: str,
                       date_from: str = _d.today().strftime('%Y-%m-%d'),
                       date_to: str = _d.today().strftime('%Y-%m-%d'), workers: int = 1):
@@ -95,22 +113,32 @@ def get_exchange_rate(cur_id: str,
     Returns:
         generator / iterator exchange rate [day_from; date_to]
     """
-    global len_queue
-    urls = Queue()
-    threads = []
-    end, start = datetime.strptime(date_to, '%Y-%m-%d'), datetime.strptime(date_from, '%Y-%m-%d')
-    for n in range(int((end - start).days) + 1):
-        urls.put(
-            f"https://www.nbrb.by/api/exrates/rates/{int(cur_id)}?ondate={(start + timedelta(n)).strftime('%Y-%m-%d')}")
-    len_queue = urls.qsize()
+    urls, output_dict = Queue(), Queue()
+    args_event = threading.Event()
+    threads, events = [], []
+    eng_name = get_eng_name(cur_id)
+    end, start_ = datetime.strptime(date_to, '%Y-%m-%d'), datetime.strptime(date_from, '%Y-%m-%d')
     with requests.Session() as s:
-        for i in range(workers):
-            td = threading.Thread(target=get_exchange_rate_by_day, args=(urls, s,))
+        for _ in range(workers):
+            event = threading.Event()
+            td = threading.Thread(target=thread_function, args=(urls, output_dict, args_event, event))
             td.start()
             threads.append(td)
+            events.append(event)
 
-        urls.join()
-    yield from data_dict
+        for url in url_with_date(end, start_, cur_id):
+            urls.put([url, eng_name, s])
+
+        args_event.set()
+        while True:
+            try:
+                result = output_dict.get(timeout=0.1)
+            except Empty:
+                if all(e.is_set() for e in events):
+                    break
+                continue
+
+            yield result
 
 
 if __name__ == "__main__":
@@ -119,12 +147,11 @@ if __name__ == "__main__":
 
     warnings.filterwarnings('ignore', message='Unverified HTTPS request')
     ar = []
-    for i in range(100):
+    for i in range(10):
         start = time.time()
-        eng_name = get_eng_name('298')
-        cur = get_exchange_rate('298', '2020-10-11', '2020-11-25', 3)
+        cur = get_exchange_rate('298', '2020-10-11', '2020-10-25', 3)
         for dict_ in cur:
             print(dict_)
         print(time.time() - start)
         ar.append(time.time() - start)
-    print(sum(ar)/len(ar))
+    print(sum(ar) / len(ar))
