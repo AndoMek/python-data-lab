@@ -40,13 +40,17 @@ def get_exchange_rate_by_day(urls, eng_name, s):
 
     Args:
         urls: Url Queue
-        s: requests.Session
         eng_name: Currency English Name
-        len_queue: queue length
-        output: queue of dict
+        s: requests.Session
 
     Returns:
-        dict
+        dict.
+            Date
+            Currency ISO Code
+            Currency ISO Number
+            Currency English Name
+            Currency Exchange Rate
+            Currency Scale
     """
 
     data = s.get(urls, verify=False)
@@ -81,6 +85,17 @@ def get_eng_name(cur_id: str):
 
 
 def thread_function(args_queue, output_queue, input_event, output_event):
+    """
+
+    Args:
+        args_queue: Arguments queue. Urls, english name, request.Session
+        output_queue: dictionary queue. see "get_exchange_rate_by_day"
+        input_event: args events
+        output_event: worker events
+
+    Returns:
+
+    """
     while True:
         try:
             args = args_queue.get(timeout=0.1)
