@@ -102,7 +102,7 @@ def sent_message(session: requests.Session, url, message: str = "Lorem ipsum dol
     s = session or requests.Session()
     if s.headers.get('Content-Encoding') == 'gzip':
         pre_requests = PreRequestHooks(session=s)
-        resp_hooks = pre_requests.post(url)
+        resp_hooks = pre_requests.post(url, date=message)
         print(resp_hooks.text)
     else:
         zipped_payload = zip_payload(message)
