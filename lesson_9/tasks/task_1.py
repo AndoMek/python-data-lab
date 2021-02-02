@@ -13,8 +13,10 @@ def zip_payload(payload: str) -> bytes:
 
 
 def add_header_hook(r, *args, **kwargs):
-    r.headers.update({
-        'Content-Encoding': 'gzip'})
+    if s.headers.get('Content-Encoding') != 'gzip':
+        r.headers.update({
+            'Content-Encoding': 'gzip'})
+        r.data = zip_payload(str(r.data))
 
     return r
 
@@ -93,22 +95,15 @@ class PreRequestHooks():
     def patch(self, url, data=None, **kwargs):
         return self.request('PATCH', url, data=data, **kwargs)
 
-
-def delete(self, url, **kwargs):
-    return self.request('DELETE', url, **kwargs)
+    def delete(self, url, **kwargs):
+        return self.request('DELETE', url, **kwargs)
 
 
 def sent_message(session: requests.Session, url, message: str = "Lorem ipsum dolor"):
     s = session or requests.Session()
-    if s.headers.get('Content-Encoding') == 'gzip':
-        pre_requests = PreRequestHooks(session=s)
-        resp_hooks = pre_requests.post(url, date=message)
-        print(resp_hooks.text)
-    else:
-        zipped_payload = zip_payload(message)
-        pre_requests = PreRequestHooks(add_header_hook, session=s)
-        resp_hooks = pre_requests.post(url, data=zipped_payload)
-        print(resp_hooks.text)
+    pre_requests = PreRequestHooks(add_header_hook, session=s)
+    resp_hooks = pre_requests.post(url, data=message)
+    print(resp_hooks.text)
 
 
 if __name__ == "__main__":
