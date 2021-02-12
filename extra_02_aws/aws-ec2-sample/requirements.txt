@@ -1,0 +1,4 @@
+boto3~=1.17.5
+flask_restx~=0.2.0
+PyYAML~=5.4.1
+psycopg2-binary~=2.8.6

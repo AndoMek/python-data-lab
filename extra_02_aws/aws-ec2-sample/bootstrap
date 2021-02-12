@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Get EC2 User"
+EC2_UID=1000
+EC2_USER=$(id -nu $EC2_UID)
+EC2_GID=$(id -g $EC2_UID)
+EC2_HOME=$(getent passwd $EC2_USER | cut -f6 -d:)
+
+DOCKER_IMAGE="dummy-api:latest"
+
+echo "Updating Amazon Linux Packages"
+yum -y update
+
+echo "Install and Setup docker"
+yum install -y docker
+/bin/systemctl enable --now docker
+usermod -aG docker $EC2_USER
+
+echo "Run docker with Airflow"
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+$(aws ecr get-login --region eu-west-1 --no-include-email)
+docker run --name awesome-api -p 5000:5000 -d $AWS_ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com/${DOCKER_IMAGE} ssm:///databases/awesome-api
