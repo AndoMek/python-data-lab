@@ -6,4 +6,3 @@ WORKDIR "/srv/producer"
 COPY ./info.py /srv/producer/info.py
 
 ENTRYPOINT ["python", "info.py"]
-

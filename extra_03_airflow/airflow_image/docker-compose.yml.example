@@ -1,0 +1,125 @@
+version: "2.1"
+
+volumes:
+  postgres_data:
+  logs_data:
+  dags_data:
+    driver_opts:
+      type: none
+      device: ${PWD}/dags
+      o: bind
+  aws_config:
+    driver_opts:
+      type: none
+      device: ${HOME}/.aws
+      o: bind
+  secret_backend_data:
+    driver_opts:
+      type: none
+      device: ${PWD}/local_backend
+      o: bind
+
+services:
+  postgres:
+    image: postgres:9.6
+    env_file:
+      - local.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  upgradedb:
+#    image: {{aws_account_id}}.dkr.ecr.eu-west-1.amazonaws.com/{{airflow_name}}:latest
+#    local built image
+    image: godeltech-airflow:latest
+    env_file:
+      - local.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    command: upgradedb
+
+  webserver:
+#    image: {{aws_account_id}}.dkr.ecr.eu-west-1.amazonaws.com/{{airflow_name}}:latest
+#    local built image
+    image: godeltech-airflow:latest
+    hostname: webserver
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      upgradedb:
+        condition: service_started
+    env_file:
+      - local.env
+    volumes:
+      - aws_config:/home/airflow/.aws:ro
+      - dags_data:/opt/airflow/dags
+      - logs_data:/opt/airflow/logs
+      - secret_backend_data:/local_backend:ro
+    ports:
+      - "8080:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /opt/airflow/airflow-webserver.pid ]"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+
+  scheduler:
+#    image: {{aws_account_id}}.dkr.ecr.eu-west-1.amazonaws.com/{{airflow_name}}:latest
+#    local built image
+    image: godeltech-airflow:latest
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      upgradedb:
+        condition: service_started
+    env_file:
+      - local.env
+    ports:
+      - "8793:8793"
+    volumes:
+      - aws_config:/home/airflow/.aws:ro
+      - dags_data:/opt/airflow/dags
+      - logs_data:/opt/airflow/logs
+      - secret_backend_data:/local_backend:ro
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /opt/airflow/airflow-scheduler.pid ]"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+
+  clean-logs:
+#    image: {{aws_account_id}}.dkr.ecr.eu-west-1.amazonaws.com/{{airflow_name}}:latest
+#    local built image
+    image: godeltech-airflow:latest
+    restart: always
+    env_file:
+      - local.env
+    volumes:
+      - logs_data:/opt/airflow/logs
+    entrypoint: /clean-logs
+
+  s3sync:
+#    image: {{aws_account_id}}.dkr.ecr.eu-west-1.amazonaws.com/{{airflow_name}}:latest
+#    local built image
+    image: godeltech-airflow:latest
+    environment:
+      - AIRFLOW__S3_PATH=s3://tld-deployment-sandbox/godeltech-airflow/sandbox/
+    env_file:
+      - local.env
+    volumes:
+      - aws_config:/home/airflow/.aws:ro
+      - dags_data:/opt/airflow/dags
+    restart: on-failure
+    entrypoint: /s3-sync
