@@ -1,0 +1,15 @@
+{
+    "CONN_A": "mysq://host_a",
+    "CONN_B": [
+        "mysq://host_a",
+        "mysq://host_a"
+    ],
+    "CONN_C": {
+        "conn_type": "scheme",
+        "host": "host",
+        "schema": "lschema",
+        "login": "Login",
+        "password": "None",
+        "port": "1234"
+    }
+}

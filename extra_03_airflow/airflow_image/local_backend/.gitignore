@@ -1,0 +1,10 @@
+# Ignore everything in folder ...
+*
+
+# ... but except .gitignore_actual itself ...
+!.gitignore
+
+# ...and examples
+!*.example.json
+!*.example.env
+!*.example.yml

@@ -1,0 +1,41 @@
+version: 1
+disable_existing_loggers: false
+formatters:
+  simple:
+    format: "%(asctime)s %(name)s %(levelname)s %(module)s %(message)s"
+  fancy:
+    format: "%(asctime)s|%(name)s %(levelname)s|%(module)s.%(funcName)s:%(lineno)-2s|%(message)s"
+  debug:
+    format: "%(asctime)s|%(name)s %(levelname)s|%(pathname)s:%(funcName)s:%(lineno)-2s|%(message)s"
+
+filters:
+  lower_than_warnings:
+    (): __main__.LowerThanFilter
+    level: WARNING
+
+handlers:
+  console_stdout:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
+    filters:
+    - lower_than_warnings
+    stream: ext://sys.stdout
+
+  console_stderr:
+    class: logging.StreamHandler
+    level: WARNING
+    formatter: debug
+    stream: ext://sys.stderr
+
+loggers:
+  __main__:
+    level: DEBUG
+    handlers:
+    - console_stdout
+    - console_stderr
+    propagate: false
+
+root:
+  level: NOTSET
+  propagate: false

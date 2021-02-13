@@ -1,0 +1,121 @@
+def accounts = [
+    'trainline-sandbox-new': ['id': '462151440747', 'creds': 'aws-sandbox-new'],
+    'trainline-data': ['id': '164810850900', 'creds': 'aws-data-creds']
+]
+
+def accounts_list = accounts.keySet().collect()
+
+def getAccountId(m, name) {
+  return m[name]["id"]
+}
+
+def getAccountCreds(m, name) {
+  return m[name]["creds"]
+}
+
+pipeline {
+    agent any
+
+    options {
+        ansiColor('xterm')
+    }
+    
+    parameters {
+        choice(name: 'ACCOUNT', choices: accounts_list, description: 'Select AWS Account')
+        booleanParam(name: 'NO_CACHE', defaultValue: false, description: 'Build docker from scratch!')
+    }
+
+    environment {
+        ACCOUNT_ID = getAccountId(accounts, params.ACCOUNT)
+        ACCOUNT_CREDS = getAccountCreds(accounts, params.ACCOUNT)
+        REPOSITORY_NAME = "frostbolt-airflow"
+        REGISTRY = "${env.ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com"
+        GIT_COMMIT_TAG = sh(returnStdout: true, script: "git tag -l --contains HEAD --sort version:refname | tail -1").trim()
+        GIT_COMMIT_HASH = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
+        DOCKER_TAG_JENKINS = "jenkins-${env.BUILD_ID}"
+    }
+
+    stages {
+        stage('Init') {
+            steps {           
+                script {
+                    currentBuild.displayName = "${params.ACCOUNT}:${env.REPOSITORY_NAME}:${env.GIT_COMMIT_HASH}"
+                    withCredentials([[$class: 'UsernamePasswordMultiBinding',
+                                  credentialsId: env.ACCOUNT_CREDS,
+                                  usernameVariable: 'AWS_ACCESS_KEY_ID',
+                                  passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                        sh '$(aws ecr get-login --region eu-west-1 --no-include-email) > /dev/null 2>&1'
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                script {
+                    def tags = []
+                    tags.add("${env.GIT_COMMIT_HASH}")
+                    
+                    if (env.GIT_COMMIT_TAG != null) {
+                        currentBuild.displayName = "${params.ACCOUNT}:${env.REPOSITORY_NAME}:${env.GIT_COMMIT_TAG}"
+                        tags.add("${env.GIT_COMMIT_TAG}")
+                        tags.add("latest")
+                    } else {
+                        tags.add("${env.DOCKER_TAG_JENKINS}")
+                    }
+
+                    def tags_args = tags.collect{ "-t ${env.REGISTRY}/${env.REPOSITORY_NAME}:$it" }.join(' ')
+                    currentBuild.description = tags.collect{ "${env.REGISTRY}/${env.REPOSITORY_NAME}:$it" }.join("\n")
+
+                    def no_cache = (params.NO_CACHE == true || env.GIT_COMMIT_TAG != null) ? " --no-cache" : ""
+                    docker_build_cmd = sh(returnStdout: true, script: "./docker_build_helper.py . ${no_cache} ${tags_args} --build-arg-file ./build.args").trim()
+					echo "${docker_build_cmd}"
+					sh "${docker_build_cmd}"
+                }
+            }
+        }
+
+        stage('Docker Push (Commit Hash)') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    sh "docker push ${env.REGISTRY}/${env.REPOSITORY_NAME}:${env.GIT_COMMIT_HASH}"
+                }
+            }
+        }
+
+        stage('Docker Push (Build Id)') {
+            when {
+                expression { env.GIT_COMMIT_TAG == null }
+            }
+            steps {
+                sh "docker push ${env.REGISTRY}/${env.REPOSITORY_NAME}:${env.DOCKER_TAG_JENKINS}"
+            }
+        }
+
+        stage('Docker Push (Commit Tag)') {
+            when {
+                expression { env.GIT_COMMIT_TAG != null }
+            }
+            steps {
+                sh "docker push ${env.REGISTRY}/${env.REPOSITORY_NAME}:${env.GIT_COMMIT_TAG}"
+            }
+        }
+
+        stage('Docker Push (Latest Tag)') {
+            when {
+                expression { env.GIT_COMMIT_TAG != null }
+            }
+            steps {
+                withCredentials([[$class: 'UsernamePasswordMultiBinding',
+                                  credentialsId: env.ACCOUNT_CREDS,
+                                  usernameVariable: 'AWS_ACCESS_KEY_ID',
+                                  passwordVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+
+                    sh "aws ecr batch-delete-image --repository-name ${env.REPOSITORY_NAME} --image-ids imageTag=latest"
+                }
+                sleep(15)
+                sh "docker push ${env.REGISTRY}/${env.REPOSITORY_NAME}:latest"
+            }
+        }
+    }
+}
