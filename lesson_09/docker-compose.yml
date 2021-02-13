@@ -2,6 +2,7 @@ version: "3"
 
 services:
   postgres:
+    command: postgres -c listen_addresses='*'
     image: citus-data-postgresql:latest
     build: docker_build
     environment:
